@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文档</title>
+<script type="text/javascript" src="jquery/jquery-1.8.3.js"></script>
+<script type="text/javascript" src="js/requestAnimationFrame.js"></script>
+<script type="text/javascript" src="js/tween.js"></script>
+</head>
+
+<body>
+
+<div id="anim" style="position: fixed; top:100%; left:100%; width:100px; height:100px; line-height:100px; text-align:center; background:#0F0; color:#FFF;">requestAnimationFrame 动画</div>
+<script type="text/javascript">
+/**
+* 动画实现
+* @param {object} prpos 一组需要动画展示的属性对象
+* {
+	 left : [start, end] 启示位置 到 结束位置
+  }
+* @param {object} setting 动画参数设置
+* @param setting.easing
+* @param setting.duration
+* @param setting.setp  每一帧回调 step(prop, now)
+* @param setting.complete 动画结束回调
+*/
+function animation(prpos, setting){
+	var noop = function(){};
+	var startTime = ( new Date() ).getTime();
+	var setting = normal(setting);
+	function normal(setting){
+		return {
+			easing :　setting.easing || 'Linear',
+			duration : setting.duration || 0,	
+			step : setting.step || noop,	
+			complete : setting.complete || noop	
+		}	
+	}
+	function start(){
+		if(tick()) {
+			requestAnimationFrame(start);
+		}
+	}
+	function tick(){
+		var currentTime = ( new Date() ).getTime(),
+		remaining = Math.max( 0, startTime + setting.duration - currentTime ),
+		// Support: Android 2.3
+		// Archaic crash bug won't allow us to use `1 - ( 0.5 || 0 )` (#12497)
+		temp = remaining / setting.duration || 0,
+		percent = 1 - temp,	//当前进度
+		isEnd = percent >= 1;
+		
+		var eased = Tween.Elastic.easeOut(percent * setting.duration, 0, 1, setting.duration);
+		
+		for(var prop in prpos) {
+			var ani = prpos[prop];
+			//ani[1] end  ani[0] start
+			var now = ( ani[1] - ani[0] ) * eased + ani[0];
+			now = isEnd ? Math.min( ani[1], now ) : now;
+			setting.step(prop, now);
+		}
+		
+		if( isEnd ) {
+			setting.complete();
+			return false;	
+		}
+		
+		return true;
+	}
+	start();
+}
+
+animation({
+	left : [100, 200],
+	top : [100,200]	
+}, {
+	duration : 10000,
+	step : function(p, now){
+		anim.style[p] = now+'px';
+	}
+})
+</script>
+</body>
+</html>
